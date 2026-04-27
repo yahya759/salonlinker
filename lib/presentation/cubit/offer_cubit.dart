@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/models/offer_model.dart';
 import '../../data/repositories/offer_repository.dart';
@@ -51,9 +52,11 @@ class OfferCubit extends Cubit<OfferState> {
 
   Future<void> updateOffer(String id, Map<String, dynamic> data) async {
     try {
+      debugPrint('Updating offer $id with data: $data');
       await _repository.updateOffer(id, data);
       await loadOffers();
     } catch (e) {
+      debugPrint('Update error: $e');
       emit(OfferError(e.toString()));
     }
   }
@@ -68,10 +71,14 @@ class OfferCubit extends Cubit<OfferState> {
   }
 
   Future<void> toggleOfferStatus(String id, bool isActive) async {
+    debugPrint('>>> [CUBIT] toggleOfferStatus called - id: $id, isActive: $isActive');
     try {
       await _repository.toggleOfferStatus(id, isActive);
+      debugPrint('>>> [CUBIT] toggleOfferStatus repo call succeeded, reloading...');
       await loadOffers();
+      debugPrint('>>> [CUBIT] toggleOfferStatus completed');
     } catch (e) {
+      debugPrint('>>> [CUBIT] toggleOfferStatus error: $e');
       emit(OfferError(e.toString()));
     }
   }

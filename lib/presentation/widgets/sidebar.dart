@@ -23,8 +23,6 @@ class Sidebar extends StatelessWidget {
     'campaign': Icons.campaign_outlined,
   };
 
-  static const List<int> _soonItems = [1, 4];
-
   @override
   Widget build(BuildContext context) {
     final locale = context.watch<LocaleCubit>().state is LocaleChanged
@@ -93,54 +91,18 @@ class Sidebar extends StatelessWidget {
           ...List.generate(AppStrings.navItems.length, (i) {
             final isSelected = i == selectedIndex;
             final item = AppStrings.navItems[i];
-            final isSoon = _soonItems.contains(i);
             return NavItem(
               label: item[locale] ?? item['en']!,
               icon: _icons[item['icon']]!,
               isSelected: isSelected,
-              isSoon: isSoon,
               locale: locale,
               onTap: () => onNavTap(i),
             );
           }),
           const Spacer(),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(
-                  Icons.add,
-                  size: 16,
-                  color: AppColors.textPrimary,
-                ),
-                label: Text(
-                  AppStrings.get('quickBooking', locale),
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.border,
-                  padding: const EdgeInsets.symmetric(vertical: 13),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  elevation: 0,
-                ),
-              ),
-            ),
-          ),
           BottomNavItem(
             icon: Icons.help_outline,
             label: AppStrings.get('support', locale),
-          ),
-          BottomNavItem(
-            icon: Icons.logout,
-            label: AppStrings.get('logout', locale),
           ),
           const SizedBox(height: 20),
         ],
@@ -153,7 +115,6 @@ class NavItem extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool isSelected;
-  final bool isSoon;
   final String locale;
   final VoidCallback onTap;
 
@@ -162,7 +123,6 @@ class NavItem extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.isSelected,
-    required this.isSoon,
     required this.locale,
     required this.onTap,
   });
@@ -201,22 +161,6 @@ class NavItem extends StatelessWidget {
                 ),
               ),
             ),
-            if (isSoon)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.accentGreen.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  locale == 'ar' ? 'قريباً' : 'SOON',
-                  style: TextStyle(
-                    color: AppColors.accentGreen,
-                    fontSize: 8,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
           ],
         ),
       ),

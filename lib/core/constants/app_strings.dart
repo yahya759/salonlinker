@@ -29,8 +29,8 @@ class AppStrings {
     'en': 'Dashboard',
   };
   static const Map<String, String> todaysBookings = {
-    'ar': 'حجوزات اليوم',
-    'en': "Today's Bookings",
+    'ar': 'جدول المواعيد',
+    'en': 'Schedule',
   };
   static const Map<String, String> barbershopDashboard = {
     'ar': 'لوحة تحكم الحلاق',
@@ -39,16 +39,8 @@ class AppStrings {
 
   static const Map<String, String> stylist = {'ar': 'الحلاق', 'en': 'STYLIST'};
   static const Map<String, String> schedule = {
-    'ar': 'الموعد',
-    'en': 'SCHEDULE',
-  };
-  static const Map<String, String> todaySchedule = {
-    'ar': 'جدول اليوم',
-    'en': "Today's Schedule",
-  };
-  static const Map<String, String> tomorrowSchedule = {
-    'ar': 'جدول الغد',
-    'en': "Tomorrow's Schedule",
+    'ar': 'جدول المواعيد',
+    'en': 'Schedule',
   };
   static const Map<String, String> reservationsCount = {
     'ar': '{count} حجز',
@@ -233,7 +225,7 @@ class AppStrings {
     'en': 'Session Completed',
   };
   static const Map<String, String> sessionCompletedSubtitle = {
-    'ar': 'إيلينا روسي -套餐 الرئيسي',
+    'ar': 'إيلينا روسي - Master Sculpt Package',
     'en': 'Elena Rossi - Master Sculpt Package',
   };
   static const Map<String, String> minsAgo = {
@@ -292,6 +284,22 @@ class AppStrings {
   static const Map<String, String> createCampaign = {
     'ar': 'إنشاء عرض',
     'en': 'CREATE OFFER',
+  };
+  static const Map<String, String> editCampaign = {
+    'ar': 'تعديل العرض',
+    'en': 'EDIT OFFER',
+  };
+  static const Map<String, String> save = {
+    'ar': 'حفظ',
+    'en': 'SAVE',
+  };
+  static const Map<String, String> cancel = {
+    'ar': 'إلغاء',
+    'en': 'CANCEL',
+  };
+  static const Map<String, String> savedSuccess = {
+    'ar': 'تم الحفظ بنجاح',
+    'en': 'Saved successfully',
   };
   static const Map<String, String> gentlemansHour = {
     'ar': 'الساعة Gentlemen',
@@ -410,6 +418,58 @@ class AppStrings {
     'en': 'Already have an account?',
   };
 
+  static const Map<String, String> memberSince = {
+    'ar': 'عضو منذ',
+    'en': 'Member Since',
+  };
+  static const Map<String, String> lastLogin = {
+    'ar': 'آخر دخول',
+    'en': 'Last Login',
+  };
+  static const Map<String, String> noUsersFound = {
+    'ar': 'لا يوجد عملاء',
+    'en': 'No users found',
+  };
+  static const Map<String, String> viewProfile = {
+    'ar': 'عرض الملف',
+    'en': 'View Profile',
+  };
+  static const Map<String, String> adminRole = {'ar': 'مدير', 'en': 'ADMIN'};
+  static const Map<String, String> barberRole = {'ar': 'حلاق', 'en': 'BARBER'};
+  static const Map<String, String> userRole = {'ar': 'عميل', 'en': 'USER'};
+
+  // User statistics strings
+  static const Map<String, String> newUsers = {
+    'ar': 'عملاء جدد',
+    'en': 'NEW USERS',
+  };
+  static const Map<String, String> last30Days = {
+    'ar': 'خلال 30 يوماً',
+    'en': 'Last 30 Days',
+  };
+  static const Map<String, String> last7Days = {
+    'ar': 'خلال 7 أيام',
+    'en': 'Last 7 Days',
+  };
+  static const Map<String, String> usersRetained = {
+    'ar': 'مستخدمون محتفظ بهم',
+    'en': 'Users Retained',
+  };
+  static const Map<String, String> roleDistribution = {
+    'ar': 'توزيع الصلاحيات',
+    'en': 'ROLE DISTRIBUTION',
+  };
+  static const Map<String, String> regularUsers = {
+    'ar': 'عملاء عاديون',
+    'en': 'REGULAR USERS',
+  };
+  static const Map<String, String> newUserRegistered = {
+    'ar': 'تم تسجيل مستخدم جديد',
+    'en': 'New User Registered',
+  };
+  static const Map<String, String> daysAgo = {'ar': 'يوم مضى', 'en': 'Day'};
+  static const Map<String, String> yesterday = {'ar': 'أمس', 'en': 'Yesterday'};
+
   static String get(String key, String locale) {
     final map = {
       'appName': appName,
@@ -422,8 +482,6 @@ class AppStrings {
       'barbershopDashboard': barbershopDashboard,
       'stylist': stylist,
       'schedule': schedule,
-      'todaySchedule': todaySchedule,
-      'tomorrowSchedule': tomorrowSchedule,
       'reservationsCount': reservationsCount,
       'noReservations': noReservations,
       'details': details,
@@ -504,6 +562,41 @@ class AppStrings {
       'startsIn14Days': startsIn14Days,
       'nocturnalAtelier': nocturnalAtelier,
       'noOffers': noOffers,
+      'welcomeBack': welcomeBack,
+      'signInToContinue': signInToContinue,
+      'pleaseEnterEmail': pleaseEnterEmail,
+      'pleaseEnterValidEmail': pleaseEnterValidEmail,
+      'pleaseEnterPassword': pleaseEnterPassword,
+      'passwordTooShort': passwordTooShort,
+      'signIn': signIn,
+      'dontHaveAccount': dontHaveAccount,
+      'forgotPassword': forgotPassword,
+      'createAccount': createAccount,
+      'signUpSubtitle': signUpSubtitle,
+      'fullName': fullName,
+      'pleaseEnterName': pleaseEnterName,
+      'signUp': signUp,
+      'alreadyHaveAccount': alreadyHaveAccount,
+      'memberSince': memberSince,
+      'lastLogin': lastLogin,
+      'noUsersFound': noUsersFound,
+      'viewProfile': viewProfile,
+      'adminRole': adminRole,
+      'barberRole': barberRole,
+      'userRole': userRole,
+      'newUsers': newUsers,
+      'last30Days': last30Days,
+      'last7Days': last7Days,
+      'usersRetained': usersRetained,
+      'roleDistribution': roleDistribution,
+      'regularUsers': regularUsers,
+      'newUserRegistered': newUserRegistered,
+      'daysAgo': daysAgo,
+      'yesterday': yesterday,
+      'editCampaign': editCampaign,
+      'save': save,
+      'cancel': cancel,
+      'savedSuccess': savedSuccess,
     };
     return map[key]?[locale] ?? key;
   }

@@ -17,10 +17,10 @@ class OnDutyCard extends StatelessWidget {
         : 'ar';
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -30,31 +30,31 @@ class OnDutyCard extends StatelessWidget {
             AppStrings.get('onDutyToday', locale),
             style: const TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 9,
-              letterSpacing: 1.4,
+              fontSize: 8,
+              letterSpacing: 1.2,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           Row(
             children: [
               SizedBox(
-                width: 90,
-                height: 32,
+                width: 75,
+                height: 28,
                 child: Stack(
                   children: [
                     for (int i = 0; i < barbers.take(3).length; i++)
                       StaffAvatar(
-                        offset: i * 20.0,
+                        offset: i * 18.0,
                         color: _getAvatarColor(i),
                         imageUrl: null,
                       ),
                     if (barbers.length > 3)
                       Positioned(
-                        left: 60,
+                        left: 54,
                         child: Container(
-                          width: 32,
-                          height: 32,
+                          width: 28,
+                          height: 28,
                           decoration: BoxDecoration(
                             color: AppColors.sidebarActive,
                             shape: BoxShape.circle,
@@ -65,7 +65,7 @@ class OnDutyCard extends StatelessWidget {
                               '+${barbers.length - 3}',
                               style: const TextStyle(
                                 color: AppColors.textSecondary,
-                                fontSize: 10,
+                                fontSize: 9,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -77,13 +77,13 @@ class OnDutyCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           Text(
             AppStrings.get('manageStaff', locale),
             style: const TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 10,
-              letterSpacing: 1.2,
+              fontSize: 9,
+              letterSpacing: 1.0,
               fontWeight: FontWeight.w700,
             ),
           ),

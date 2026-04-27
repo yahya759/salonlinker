@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
-import '../../data/models/barber_model.dart';
 import '../cubit/app_cubit.dart';
 import '../cubit/locale_cubit.dart';
-import '../widgets/booking_card.dart';
 import '../widgets/insights_card.dart';
 import '../widgets/on_duty_card.dart';
 import '../widgets/reservation_card.dart';
@@ -55,7 +53,7 @@ class DashboardView extends StatelessWidget {
 
         // Navigation
         if (state.selectedNavIndex == 3) {
-          return Expanded(child: BarberManagementScreen(locale: locale));
+          return BarberManagementScreen(locale: locale);
         } else if (state.selectedNavIndex == 2) {
           return Expanded(child: ClientDirectoryScreen(locale: locale));
         } else if (state.selectedNavIndex == 5) {
@@ -64,10 +62,9 @@ class DashboardView extends StatelessWidget {
           return Expanded(
             child: ScheduleScreen(
               locale: locale,
-              reservations: state.showToday
-                  ? state.todayReservations
-                  : state.tomorrowReservations,
-              showToday: state.showToday,
+              reservations: state.allReservations,
+              showToday: false,
+              services: state.services,
             ),
           );
         } else if (state.selectedNavIndex == 4) {
@@ -85,107 +82,120 @@ class DashboardView extends StatelessWidget {
         ? state.todayReservations
         : state.tomorrowReservations;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppStrings.get('barbershopDashboard', locale),
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    AppStrings.get('todaysBookings', locale),
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-              TodayTomorrowToggle(
-                showToday: state.showToday,
-                onToggle: (v) =>
-                    context.read<AppCubit>().toggleTodayTomorrow(v),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final isMobile = constraints.maxWidth < 800;
-
-              if (isMobile) {
-                return Column(
+    return RefreshIndicator(
+      onRefresh: () => context.read<AppCubit>().loadAll(),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    ...reservations.map(
-                      (r) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: ReservationCard(reservation: r, locale: locale),
+                    Text(
+                      AppStrings.get('barbershopDashboard', locale),
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 26,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    InsightsSummaryCard(
-                      reservations: reservations,
-                      services: state.services,
+                    const SizedBox(height: 4),
+                    Text(
+                      AppStrings.get('todaysBookings', locale),
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    OnDutyCard(barbers: state.barbers),
+                  ],
+                ),
+                TodayTomorrowToggle(
+                  showToday: state.showToday,
+                  onToggle: (v) =>
+                      context.read<AppCubit>().toggleTodayTomorrow(v),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isMobile = constraints.maxWidth < 800;
+
+                if (isMobile) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ...reservations.map(
+                        (r) => Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: ReservationCard(
+                            reservation: r,
+                            locale: locale,
+                            services: state.services,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      InsightsSummaryCard(
+                        reservations: reservations,
+                        services: state.services,
+                      ),
+                      const SizedBox(height: 16),
+                      OnDutyCard(barbers: state.barbers),
+                    ],
+                  );
+                }
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: reservations
+                            .map(
+                              (r) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: ReservationCard(
+                                  reservation: r,
+                                  locale: locale,
+                                  services: state.services,
+                                ),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    SizedBox(
+                      width: 230,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          InsightsSummaryCard(
+                            reservations: reservations,
+                            services: state.services,
+                          ),
+                          const SizedBox(height: 16),
+                          OnDutyCard(barbers: state.barbers),
+                        ],
+                      ),
+                    ),
                   ],
                 );
-              }
-
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: Column(
-                      children: reservations
-                          .map(
-                            (r) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: ReservationCard(
-                                reservation: r,
-                                locale: locale,
-                              ),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                  const SizedBox(width: 20),
-                  SizedBox(
-                    width: 230,
-                    child: Column(
-                      children: [
-                        InsightsSummaryCard(
-                          reservations: reservations,
-                          services: state.services,
-                        ),
-                        const SizedBox(height: 16),
-                        OnDutyCard(barbers: state.barbers),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
+              },
+            ),
+            const SizedBox(height: 100), // مساحة إضافية للتم裤
+          ],
+        ),
       ),
     );
   }

@@ -56,9 +56,9 @@ class Barber {
       'name': name,
       'phone': phone,
       'email': email,
-      'branch_id': branchId,
+      'branchid': branchId,
       'specializations': specializations,
-      'is_active': isActive,
+      'isactive': isActive,
     };
   }
 
@@ -102,8 +102,8 @@ class Service {
       id: map['id'] ?? 0,
       name: map['name'] ?? '',
       description: map['description'],
-      price: map['price']?.toString() ?? '0',
-      duration: map['duration'],
+      price: map['priceusd']?.toString() ?? '0',
+      duration: map['durationminutes']?.toString(),
       startTime: map['start_time'],
       endTime: map['end_time'],
       breakStart: map['break_start'],
@@ -136,6 +136,7 @@ class Reservation {
   final String clientName;
   final String clientPhone;
   final String serviceName;
+  final int? serviceId;
   final DateTime reservationDate;
   final String startTime;
   final String endTime;
@@ -151,6 +152,7 @@ class Reservation {
     required this.clientName,
     required this.clientPhone,
     required this.serviceName,
+    this.serviceId,
     required this.reservationDate,
     required this.startTime,
     required this.endTime,
@@ -163,6 +165,10 @@ class Reservation {
   });
 
   factory Reservation.fromMap(Map<String, dynamic> map) {
+    // Handle joined data from Supabase (services.name comes as nested object)
+    final serviceName = map['services']?['name'] ?? map['service_name'] ?? '';
+    final barberName = map['barbers']?['name'] ?? map['barber_name'];
+
     // Use 'booking_date' column for reservation date
     final dateValue = map['booking_date'];
 
@@ -179,12 +185,13 @@ class Reservation {
       id: map['id'] ?? 0,
       clientName: map['client_name'] ?? '',
       clientPhone: map['client_phone'] ?? '',
-      serviceName: map['service_name'] ?? '',
+      serviceName: serviceName.toString(),
+      serviceId: map['service_id'],
       reservationDate: parsedDate,
       startTime: map['start_time'] ?? '',
       endTime: map['end_time'] ?? '',
       status: _parseStatus(map['status']),
-      barberName: map['barber_name'],
+      barberName: barberName?.toString() ?? map['barber_name'],
       notes: map['notes'],
       isPaid: map['is_paid'] ?? false,
       createdAt: DateTime.tryParse(map['created_at'] ?? '') ?? DateTime.now(),
@@ -209,6 +216,7 @@ class Reservation {
       'client_name': clientName,
       'client_phone': clientPhone,
       'service_name': serviceName,
+      'service_id': serviceId,
       'booking_date': dateStr,
       'start_time': startTime,
       'end_time': endTime,

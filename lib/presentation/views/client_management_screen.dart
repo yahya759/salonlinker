@@ -2,48 +2,86 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
+import '../cubit/app_cubit.dart';
 import '../cubit/locale_cubit.dart';
 
-class ClientDirectoryScreen extends StatelessWidget {
+class ClientDirectoryScreen extends StatefulWidget {
   final String locale;
 
   const ClientDirectoryScreen({super.key, required this.locale});
 
   @override
+  State<ClientDirectoryScreen> createState() => _ClientDirectoryScreenState();
+}
+
+class _ClientDirectoryScreenState extends State<ClientDirectoryScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 5,
-            child: Container(
-              padding: const EdgeInsets.all(32.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildTopHeader(context),
-                  const SizedBox(height: 40),
-                  _buildClientDirectoryHeader(),
-                  const SizedBox(height: 24),
-                  _buildFilterBar(),
-                  const SizedBox(height: 32),
-                  SizedBox(height: 500, child: const ClientsGrid()),
-                ],
+    return BlocBuilder<AppCubit, AppState>(
+      builder: (context, state) {
+        final allUsers = state is AppLoaded ? state.users : [];
+        final users = _searchQuery.isEmpty
+            ? allUsers
+            : allUsers.where((u) {
+                final query = _searchQuery.toLowerCase();
+                return (u.name?.toLowerCase().contains(query) ?? false) ||
+                    (u.email?.toLowerCase().contains(query) ?? false);
+              }).toList();
+        final loading = state is AppLoading;
+
+        return SingleChildScrollView(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 5,
+                child: Container(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildTopHeader(context, loading),
+                      const SizedBox(height: 40),
+                      _buildClientDirectoryHeader(),
+                      const SizedBox(height: 24),
+                      _buildFilterBar(),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        height: 500,
+                        child: ClientsGrid(users: users, loading: loading),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+              Expanded(
+                flex: 2,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.zero,
+                  child: ClientInsightsPanel(allUsers: users),
+                ),
+              ),
+            ],
           ),
-          const Expanded(flex: 2, child: ClientInsightsPanel()),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildTopHeader(BuildContext context) {
+  Widget _buildTopHeader(BuildContext context, bool loading) {
     return Row(
       children: [
         Text(
-          AppStrings.get('clientManagement', locale),
+          AppStrings.get('clientManagement', widget.locale),
           style: const TextStyle(
             color: AppColors.textSecondary,
             fontSize: 12,
@@ -59,55 +97,34 @@ class ClientDirectoryScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                const Icon(
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 13,
+              ),
+              decoration: InputDecoration(
+                hintText: AppStrings.get('searchDatabase', widget.locale),
+                hintStyle: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 13,
+                ),
+                border: InputBorder.none,
+                icon: const Icon(
                   Icons.search,
                   color: AppColors.textSecondary,
                   size: 18,
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  AppStrings.get('searchDatabase', locale),
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
-        const SizedBox(width: 40),
-        const Icon(Icons.notifications_none, color: AppColors.textSecondary),
         const SizedBox(width: 20),
-        const Icon(Icons.dark_mode_outlined, color: AppColors.textSecondary),
-        const SizedBox(width: 40),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            const Text(
-              'Julian Black',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            Text(
-              AppStrings.get('masterBarber', locale),
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 10,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(width: 12),
-        const CircleAvatar(
-          radius: 18,
-          backgroundColor: AppColors.textSecondary,
-        ),
       ],
     );
   }
@@ -117,7 +134,7 @@ class ClientDirectoryScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          AppStrings.get('clientDirectory', locale),
+          AppStrings.get('clientDirectory', widget.locale),
           style: const TextStyle(
             fontSize: 48,
             fontWeight: FontWeight.bold,
@@ -129,7 +146,7 @@ class ClientDirectoryScreen extends StatelessWidget {
         SizedBox(
           width: 300,
           child: Text(
-            AppStrings.get('managingClients', locale),
+            AppStrings.get('managingClients', widget.locale),
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 14,
@@ -143,9 +160,9 @@ class ClientDirectoryScreen extends StatelessWidget {
   Widget _buildFilterBar() {
     return Row(
       children: [
-        _buildFilterChip(AppStrings.get('statusAll', locale), true),
+        _buildFilterChip(AppStrings.get('statusAll', widget.locale), true),
         const SizedBox(width: 12),
-        _buildFilterChip(AppStrings.get('sortLastVisit', locale), false),
+        _buildFilterChip(AppStrings.get('sortLastVisit', widget.locale), false),
       ],
     );
   }
@@ -177,7 +194,10 @@ class ClientDirectoryScreen extends StatelessWidget {
 }
 
 class ClientsGrid extends StatelessWidget {
-  const ClientsGrid({super.key});
+  final List<dynamic> users;
+  final bool loading;
+
+  const ClientsGrid({super.key, required this.users, required this.loading});
 
   @override
   Widget build(BuildContext context) {
@@ -185,81 +205,72 @@ class ClientsGrid extends StatelessWidget {
         ? (context.watch<LocaleCubit>().state as LocaleChanged).locale
         : 'ar';
 
-    final clients = _getSampleClients(locale);
+    if (loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (users.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.person_off_outlined,
+              size: 80,
+              color: AppColors.border,
+            ),
+            const SizedBox(height: 24),
+            Text(
+              AppStrings.get('noUsersFound', locale),
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return GridView.builder(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 1.4,
+        childAspectRatio: 1.8,
         crossAxisSpacing: 24,
         mainAxisSpacing: 24,
       ),
-      itemCount: clients.length,
-      itemBuilder: (context, index) => ClientCard(
-        name: clients[index]['name']!,
-        email: clients[index]['email']!,
-        visits: clients[index]['visits']!,
-        lastSession: clients[index]['lastSession']!,
-        tag: clients[index]['tag']!,
-        locale: locale,
-      ),
+      itemCount: users.length,
+      itemBuilder: (context, index) =>
+          ClientCard(user: users[index], locale: locale),
     );
-  }
-
-  List<Map<String, String>> _getSampleClients(String locale) {
-    return [
-      {
-        'name': 'Sebastian Thorne',
-        'email': 's.thorne@luxury-exec.com',
-        'visits': '42',
-        'lastSession': 'Oct 12',
-        'tag': 'VIP',
-      },
-      {
-        'name': 'Avery Vance',
-        'email': 'vance.design@studio.io',
-        'visits': '18',
-        'lastSession': 'Sep 28',
-        'tag': 'REGULAR',
-      },
-      {
-        'name': 'Julian Mercer',
-        'email': 'j.mercer@fintech.com',
-        'visits': '01',
-        'lastSession': AppStrings.get('today', locale),
-        'tag': 'NEW',
-      },
-      {
-        'name': 'Elena Rossi',
-        'email': 'elena.rossi@vogue.it',
-        'visits': '56',
-        'lastSession': 'Oct 01',
-        'tag': 'VIP',
-      },
-    ];
   }
 }
 
-class ClientCard extends StatelessWidget {
-  final String name;
-  final String email;
-  final String visits;
-  final String lastSession;
-  final String tag;
+class ClientCard extends StatefulWidget {
+  final dynamic user;
   final String locale;
 
-  const ClientCard({
-    super.key,
-    required this.name,
-    required this.email,
-    required this.visits,
-    required this.lastSession,
-    required this.tag,
-    required this.locale,
-  });
+  const ClientCard({super.key, required this.user, required this.locale});
 
   @override
+  State<ClientCard> createState() => _ClientCardState();
+}
+
+class _ClientCardState extends State<ClientCard> {
+  @override
   Widget build(BuildContext context) {
+    final role = widget.user.role;
+    final roleText = role == 'admin'
+        ? AppStrings.get('adminRole', widget.locale)
+        : role == 'barber'
+        ? AppStrings.get('barberRole', widget.locale)
+        : AppStrings.get('userRole', widget.locale);
+    final roleColor = role == 'admin'
+        ? Colors.redAccent
+        : role == 'barber'
+        ? Colors.blueAccent
+        : Colors.greenAccent;
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -275,6 +286,16 @@ class ClientCard extends StatelessWidget {
               CircleAvatar(
                 radius: 24,
                 backgroundColor: AppColors.textSecondary,
+                child: Text(
+                  widget.user.name?.isNotEmpty == true
+                      ? widget.user.name![0].toUpperCase()
+                      : '?',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: AppColors.bg,
+                  ),
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -285,7 +306,7 @@ class ClientCard extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            name,
+                            widget.user.name ?? widget.user.email ?? 'Unknown User',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
@@ -301,21 +322,22 @@ class ClientCard extends StatelessWidget {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.border,
+                            color: roleColor.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            tag,
-                            style: const TextStyle(
+                            roleText,
+                            style: TextStyle(
                               fontSize: 8,
-                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.bold,
+                              color: roleColor,
                             ),
                           ),
                         ),
                       ],
                     ),
                     Text(
-                      email,
+                      widget.user.email ?? 'No email',
                       style: const TextStyle(
                         color: AppColors.textSecondary,
                         fontSize: 12,
@@ -329,46 +351,21 @@ class ClientCard extends StatelessWidget {
           const Spacer(),
           Row(
             children: [
-              _buildStat(AppStrings.get('totalVisits', locale), visits),
-              const SizedBox(width: 40),
-              _buildStat(AppStrings.get('lastSession', locale), lastSession),
-            ],
-          ),
-          const Spacer(),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.bg,
-                    foregroundColor: AppColors.textPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Text(
-                    AppStrings.get('profile', locale),
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                ),
+              _buildStat(
+                AppStrings.get('memberSince', widget.locale),
+                widget.user.createdAt != null
+                    ? '${widget.user.createdAt.year}-${widget.user.createdAt.month.toString().padLeft(2, '0')}'
+                    : 'N/A',
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.textPrimary,
-                    foregroundColor: AppColors.bg,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Text(
-                    AppStrings.get('bookNow', locale),
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                ),
+              const SizedBox(width: 40),
+              _buildStat(
+                AppStrings.get('lastLogin', widget.locale),
+                widget.user.lastSignedIn != null &&
+                        widget.user.lastSignedIn.day == DateTime.now().day
+                    ? AppStrings.get('today', widget.locale)
+                    : widget.user.lastSignedIn != null
+                    ? '${widget.user.lastSignedIn.month}/${widget.user.lastSignedIn.day}'
+                    : 'N/A',
               ),
             ],
           ),
@@ -404,7 +401,9 @@ class ClientCard extends StatelessWidget {
 }
 
 class ClientInsightsPanel extends StatelessWidget {
-  const ClientInsightsPanel({super.key});
+  final List<dynamic> allUsers;
+
+  const ClientInsightsPanel({super.key, required this.allUsers});
 
   @override
   Widget build(BuildContext context) {
@@ -412,80 +411,217 @@ class ClientInsightsPanel extends StatelessWidget {
         ? (context.watch<LocaleCubit>().state as LocaleChanged).locale
         : 'ar';
 
+    // Calculate statistics
+    final totalUsers = allUsers.length;
+    final adminCount = allUsers.where((u) => u.role == 'admin').length;
+    final barberCount = allUsers.where((u) => u.role == 'barber').length;
+    final regularUserCount = allUsers.where((u) => u.role == 'user').length;
+
+    // Recently active (logged in within last 7 days)
+    final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
+    final recentActiveUsers = allUsers
+        .where((u) => u.lastSignedIn.isAfter(sevenDaysAgo))
+        .length;
+
+    // New users (created within last 30 days)
+    final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30));
+    final newUsers = allUsers
+        .where((u) => u.createdAt.isAfter(thirtyDaysAgo))
+        .length;
+
+    // Calculate retention (users who logged in at least once)
+    final retainedUsers = allUsers
+        .where((u) => u.lastSignedIn.isAfter(u.createdAt))
+        .length;
+    final retentionRate = totalUsers > 0
+        ? (retainedUsers / totalUsers * 100)
+        : 0.0;
+
+    // Top active users (most recent logins)
+    final topUsers = allUsers.toList()
+      ..sort((a, b) => b.lastSignedIn.compareTo(a.lastSignedIn));
+    final topPerformers = topUsers.take(3).toList();
+
     return Container(
       color: AppColors.surface,
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            AppStrings.get('atelierInsights', locale),
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
+padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 16),
+            // Overview Stats Row
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  AppStrings.get('totalClientBase', locale),
+                  totalUsers.toString(),
+                  AppColors.accentGreen,
+                  Icons.people_outlined,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStatCard(
+                  'الصلاحيات',
+                  '$adminCount مدير\n$barberCount حلاق\n$regularUserCount عميل',
+                  Colors.blueAccent,
+                  Icons.admin_panel_settings_outlined,
+                  isSmall: true,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStatCard(
+                  AppStrings.get('retentionRate', locale),
+                  '${retentionRate.toStringAsFixed(1)}%',
+                  Colors.amberAccent,
+                  Icons.show_chart_outlined,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 32),
-          _buildInsightCard(
-            AppStrings.get('totalClientBase', locale),
-            '1,284',
-            AppStrings.get('plusPercent', locale),
+          const SizedBox(height: 12),
+          // Growth & Activity Row
+          Row(
+            children: [
+              Expanded(
+                child: _buildInsightCard(
+                  AppStrings.get('newUsers', locale),
+                  newUsers.toString(),
+                  AppStrings.get('last30Days', locale),
+                  Colors.greenAccent,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildInsightCard(
+                  AppStrings.get('recentlyActive', locale),
+                  recentActiveUsers.toString(),
+                  AppStrings.get('last7Days', locale),
+                  Colors.cyanAccent,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildRetentionCard(
+                  locale,
+                  retentionRate,
+                  retainedUsers,
+                  totalUsers,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-          _buildRetentionCard(locale),
-          const SizedBox(height: 40),
+          const SizedBox(height: 20),
+          // Role Distribution
+          _buildRoleDistribution(
+            adminCount,
+            barberCount,
+            regularUserCount,
+            totalUsers,
+            locale,
+          ),
+          const SizedBox(height: 16),
+          // Top Performers
           Text(
             AppStrings.get('elitePerformers', locale),
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
               letterSpacing: 1.2,
+              fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 16),
-          _buildPerformerItem(
-            'Elena Rossi',
-            '56 ${AppStrings.get('visits', locale)}',
-            '\$12,480',
-          ),
-          _buildPerformerItem(
-            'Sebastian Thorne',
-            '42 ${AppStrings.get('visits', locale)}',
-            '\$8,920',
-          ),
-          const SizedBox(height: 40),
+          ...topPerformers.map((user) => _buildPerformerItem(user, locale)),
+          const SizedBox(height: 16),
+          // Recent Activity
           Text(
             AppStrings.get('recentActivity', locale),
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 11,
               letterSpacing: 1.2,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 24),
-          _buildActivityItem(
-            AppStrings.get('newClientRegistered', locale),
-            AppStrings.get('newClientSubtitle', locale),
-            '2 ${AppStrings.get('minsAgo', locale)}',
+          const SizedBox(height: 12),
+          ..._buildRecentActivity(allUsers, locale),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(
+    String title,
+    String value,
+    Color color,
+    IconData icon, {
+    bool isSmall = false,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Icon(icon, color: color, size: 20),
+              if (!isSmall)
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(child: Icon(icon, color: color, size: 16)),
+                ),
+            ],
           ),
-          _buildActivityItem(
-            AppStrings.get('sessionCompleted', locale),
-            AppStrings.get('sessionCompletedSubtitle', locale),
-            '45 ${AppStrings.get('minsAgo', locale)}',
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: isSmall ? 9 : 10,
+              letterSpacing: 1,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInsightCard(String title, String value, String trend) {
+  Widget _buildInsightCard(
+    String title,
+    String value,
+    String subtitle,
+    Color color,
+  ) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.bg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -494,36 +630,38 @@ class ClientInsightsPanel extends StatelessWidget {
             title,
             style: const TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 10,
+              fontSize: 9,
               letterSpacing: 1.1,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             value,
             style: const TextStyle(
-              fontSize: 32,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            trend,
-            style: const TextStyle(color: AppColors.accentGreen, fontSize: 12),
-          ),
+          Text(subtitle, style: TextStyle(color: color, fontSize: 12)),
         ],
       ),
     );
   }
 
-  Widget _buildRetentionCard(String locale) {
+  Widget _buildRetentionCard(
+    String locale,
+    double rate,
+    int retained,
+    int total,
+  ) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.bg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -532,14 +670,14 @@ class ClientInsightsPanel extends StatelessWidget {
             AppStrings.get('retentionRate', locale),
             style: const TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 10,
+              fontSize: 9,
               letterSpacing: 1.1,
             ),
           ),
           const SizedBox(height: 12),
-          const Text(
-            '84.2%',
-            style: TextStyle(
+          Text(
+            '${rate.toStringAsFixed(1)}%',
+            style: const TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
@@ -547,25 +685,157 @@ class ClientInsightsPanel extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           LinearProgressIndicator(
-            value: 0.842,
+            value: rate / 100,
             backgroundColor: AppColors.border,
             color: AppColors.textPrimary,
-            minHeight: 4,
-            borderRadius: BorderRadius.circular(2),
+            minHeight: 6,
+            borderRadius: BorderRadius.circular(3),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '$retained / $total ${AppStrings.get('usersRetained', locale)}',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPerformerItem(String name, String visits, String amount) {
+  Widget _buildRoleDistribution(
+    int admin,
+    int barber,
+    int regular,
+    int total,
+    String locale,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.bg,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            AppStrings.get('roleDistribution', locale),
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 11,
+              letterSpacing: 1.2,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 20),
+          _buildRoleBar(
+            'Admin',
+            admin,
+            total,
+            Colors.redAccent,
+            Icons.security,
+            locale,
+          ),
+          const SizedBox(height: 16),
+          _buildRoleBar(
+            'Barber',
+            barber,
+            total,
+            Colors.blueAccent,
+            Icons.content_cut,
+            locale,
+          ),
+          const SizedBox(height: 16),
+          _buildRoleBar(
+            AppStrings.get('regularUsers', locale),
+            regular,
+            total,
+            Colors.greenAccent,
+            Icons.person,
+            locale,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoleBar(
+    String label,
+    int count,
+    int total,
+    Color color,
+    IconData icon,
+    String locale,
+  ) {
+    final percentage = total > 0 ? (count / total * 100) : 0.0;
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(width: 12),
+        Flexible(
+          child: Text(
+            label,
+            style: const TextStyle(color: AppColors.textPrimary, fontSize: 12),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '($count)',
+          style: TextStyle(
+            color: color,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: LinearProgressIndicator(
+            value: percentage / 100,
+            backgroundColor: AppColors.border,
+            color: color,
+            minHeight: 6,
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          '${percentage.toStringAsFixed(0)}%',
+          style: TextStyle(
+            color: color,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPerformerItem(dynamic user, String locale) {
+    final roleColor = user.role == 'admin'
+        ? Colors.redAccent
+        : user.role == 'barber'
+        ? Colors.blueAccent
+        : Colors.greenAccent;
+    final daysSinceLogin = DateTime.now().difference(user.lastSignedIn).inDays;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.only(bottom: 16),
       child: Row(
         children: [
-          const CircleAvatar(
-            radius: 14,
-            backgroundColor: AppColors.textSecondary,
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: roleColor.withOpacity(0.2),
+            child: Text(
+              user.name?.isNotEmpty == true ? user.name![0].toUpperCase() : '?',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: roleColor,
+              ),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -573,15 +843,15 @@ class ClientInsightsPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name,
+                  user.name ?? user.email ?? 'Unknown',
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
                   ),
                 ),
                 Text(
-                  visits,
+                  '${user.getRoleDisplay(locale)} • Joined ${user.createdAt.year}-${user.createdAt.month}',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 11,
@@ -590,69 +860,95 @@ class ClientInsightsPanel extends StatelessWidget {
               ],
             ),
           ),
-          Text(
-            amount,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                '$daysSinceLogin ${AppStrings.get('daysAgo', locale)}',
+                style: const TextStyle(
+                  color: AppColors.textSecondary,
+                  fontSize: 10,
+                ),
+              ),
+              Text(
+                user.lastSignedIn.day == DateTime.now().day
+                    ? AppStrings.get('today', locale)
+                    : user.lastSignedIn.day == DateTime.now().day - 1
+                    ? AppStrings.get('yesterday', locale)
+                    : '${user.lastSignedIn.month}/${user.lastSignedIn.day}',
+                style: const TextStyle(
+                  color: AppColors.accentGreen,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActivityItem(String title, String subtitle, String time) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            margin: const EdgeInsets.only(top: 4),
-            width: 8,
-            height: 8,
-            decoration: const BoxDecoration(
-              color: AppColors.textSecondary,
-              shape: BoxShape.circle,
+  List<Widget> _buildRecentActivity(List<dynamic> users, String locale) {
+    final sortedUsers = users.toList()
+      ..sort((a, b) => b.lastSignedIn.compareTo(a.lastSignedIn));
+    final recent = sortedUsers.take(5).toList();
+
+    return recent.map((user) {
+      final isNew = DateTime.now().difference(user.createdAt).inDays <= 7;
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 20),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 4),
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: isNew ? Colors.greenAccent : AppColors.textSecondary,
+                shape: BoxShape.circle,
+              ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isNew
+                        ? '${AppStrings.get('newUserRegistered', locale)}: ${user.name ?? user.email}'
+                        : '${user.name ?? user.email} ${AppStrings.get('lastLogin', locale)}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 11,
+                  const SizedBox(height: 4),
+                  Text(
+                    '${user.getRoleDisplay(locale)} • ${user.createdAt.day}/${user.createdAt.month}/${user.createdAt.year}',
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 11,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  time,
-                  style: const TextStyle(
-                    color: Colors.white24,
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+            Text(
+              DateTime.now().difference(user.lastSignedIn).inDays == 0
+                  ? AppStrings.get('today', locale)
+                  : '${DateTime.now().difference(user.lastSignedIn).inDays} ${AppStrings.get('daysAgo', locale)}',
+              style: const TextStyle(
+                color: Colors.white24,
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      );
+    }).toList();
   }
 }

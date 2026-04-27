@@ -8,12 +8,14 @@ class ScheduleScreen extends StatelessWidget {
   final String locale;
   final List<Reservation> reservations;
   final bool showToday;
+  final List<Service> services;
 
   const ScheduleScreen({
     super.key,
     required this.locale,
     required this.reservations,
     required this.showToday,
+    required this.services,
   });
 
   @override
@@ -28,7 +30,7 @@ class ScheduleScreen extends StatelessWidget {
             children: [
               Text(
                 AppStrings.get(
-                  showToday ? 'todaySchedule' : 'tomorrowSchedule',
+                  'schedule',
                   locale,
                 ),
                 style: const TextStyle(
@@ -92,7 +94,7 @@ class ScheduleScreen extends StatelessWidget {
                 final isMobile = constraints.maxWidth < 800;
 
                 if (isMobile) {
-                  return Column(
+return Column(
                     children: reservations
                         .map(
                           (r) => Padding(
@@ -100,6 +102,7 @@ class ScheduleScreen extends StatelessWidget {
                             child: ReservationCard(
                               reservation: r,
                               locale: locale,
+                              services: services,
                             ),
                           ),
                         )
@@ -108,15 +111,16 @@ class ScheduleScreen extends StatelessWidget {
                 }
 
                 return Column(
-                  children: reservations
-                      .map(
-                        (r) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: ReservationCard(
-                            reservation: r,
-                            locale: locale,
+                    children: reservations
+                        .map(
+                          (r) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: ReservationCard(
+                              reservation: r,
+                              locale: locale,
+                              services: services,
+                            ),
                           ),
-                        ),
                       )
                       .toList(),
                 );

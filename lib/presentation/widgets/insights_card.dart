@@ -27,8 +27,9 @@ class InsightsSummaryCard extends StatelessWidget {
       if (res.status != ReservationStatus.cancelled) {
         validReservations++;
         final service = services.cast<Service?>().firstWhere(
-            (s) => s?.name == res.serviceName,
-            orElse: () => null);
+          (s) => s?.id == res.serviceId,
+          orElse: () => null,
+        );
         if (service != null) {
           totalRevenue += double.tryParse(service.price) ?? 0.0;
         }
@@ -36,102 +37,107 @@ class InsightsSummaryCard extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             AppStrings.get('insightsSummary', locale),
             style: const TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 9,
-              letterSpacing: 1.4,
+              fontSize: 8,
+              letterSpacing: 1.2,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           Text(
             AppStrings.get('todaysRevenue', locale),
             style: const TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 11,
+              fontSize: 10,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
-            '\$${totalRevenue.toStringAsFixed(2)}',
+            '\$${totalRevenue.toStringAsFixed(0)}',
             style: const TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 28,
+              fontSize: 16,
               fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
+              letterSpacing: -0.3,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(
                 Icons.trending_up,
                 color: AppColors.accentGreen,
                 size: 14,
               ),
-              const SizedBox(width: 4),
-              Text(
-                locale == 'ar' ? '+12% من昨天' : '+12% FROM YESTERDAY',
-                style: const TextStyle(
-                  color: AppColors.accentGreen,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.5,
+              const SizedBox(width: 2),
+              Flexible(
+                child: Text(
+                  locale == 'ar' ? '+12% من昨天' : '+12% FROM YESTERDAY',
+                  style: const TextStyle(
+                    color: AppColors.accentGreen,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Text(
             AppStrings.get('reservations', locale),
             style: const TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 11,
+              fontSize: 10,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             '$validReservations',
             style: const TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 26,
+              fontSize: 16,
               fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(3),
             child: LinearProgressIndicator(
               value: validReservations / 20.0,
               backgroundColor: AppColors.border,
               valueColor: const AlwaysStoppedAnimation<Color>(
                 AppColors.textPrimary,
               ),
-              minHeight: 5,
+              minHeight: 3,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Text(
             AppStrings.get('liveActivity', locale),
             style: const TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 9,
-              letterSpacing: 1.4,
+              fontSize: 8,
+              letterSpacing: 1.2,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           LiveActivityItem(
             richText: TextSpan(
               children: [
@@ -140,14 +146,14 @@ class InsightsSummaryCard extends StatelessWidget {
                   style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w700,
-                    fontSize: 11,
+                    fontSize: 10,
                   ),
                 ),
                 TextSpan(
                   text: locale == 'ar' ? 'finished a ' : 'finished a ',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
-                    fontSize: 11,
+                    fontSize: 10,
                   ),
                 ),
                 TextSpan(
@@ -155,7 +161,7 @@ class InsightsSummaryCard extends StatelessWidget {
                   style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
-                    fontSize: 11,
+                    fontSize: 10,
                   ),
                 ),
                 TextSpan(
@@ -164,13 +170,13 @@ class InsightsSummaryCard extends StatelessWidget {
                       : 'for client Sarah J.',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
-                    fontSize: 11,
+                    fontSize: 10,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           LiveActivityItem(
             richText: TextSpan(
               children: [
@@ -179,7 +185,7 @@ class InsightsSummaryCard extends StatelessWidget {
                   style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w700,
-                    fontSize: 11,
+                    fontSize: 10,
                   ),
                 ),
                 TextSpan(
@@ -188,7 +194,7 @@ class InsightsSummaryCard extends StatelessWidget {
                       : 'created for 8:00 PM by New Client.',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
-                    fontSize: 11,
+                    fontSize: 10,
                   ),
                 ),
               ],

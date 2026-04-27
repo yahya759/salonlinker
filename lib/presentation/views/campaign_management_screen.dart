@@ -1,7 +1,8 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:file_selector/file_selector.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 import '../../data/models/offer_model.dart';
@@ -50,36 +51,7 @@ class CampaignManagementScreen extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Row(
-      children: [
-        Text(
-          AppStrings.get('nocturnalAtelier', locale),
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-            letterSpacing: 1.5,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const Spacer(),
-        const Icon(
-          Icons.notifications_none,
-          color: AppColors.textSecondary,
-          size: 20,
-        ),
-        const SizedBox(width: 20),
-        const Icon(
-          Icons.settings_outlined,
-          color: AppColors.textSecondary,
-          size: 20,
-        ),
-        const SizedBox(width: 20),
-        const CircleAvatar(
-          radius: 14,
-          backgroundColor: AppColors.textSecondary,
-        ),
-      ],
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _buildCampaignTitleSection() {
@@ -124,8 +96,8 @@ class CampaignManagementScreen extends StatelessWidget {
         ),
         BlocBuilder<OfferCubit, OfferState>(
           builder: (context, state) {
-            final activeCount = state is OfferLoaded
-                ? state.activeOffers.length
+            final totalCount = state is OfferLoaded
+                ? state.offers.length
                 : 0;
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -141,7 +113,7 @@ class CampaignManagementScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    '${AppStrings.get('live', locale)} ($activeCount)',
+                    '${AppStrings.get('live', locale)} ($totalCount)',
                     style: const TextStyle(
                       fontSize: 10,
                       color: AppColors.textSecondary,
@@ -185,12 +157,18 @@ class _NewOfferFormState extends State<NewOfferForm> {
   }
 
   Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
+    debugPrint('>>> [IMAGE_PICKER] Starting image selection...');
+    const typeGroup = XTypeGroup(label: 'Images', extensions: ['jpg', 'jpeg', 'png', 'webp']);
+    final file = await openFile(acceptedTypeGroups: [typeGroup]);
+    debugPrint('>>> [IMAGE_PICKER] File selected: ${file?.name}');
+    debugPrint('>>> [IMAGE_PICKER] File path: ${file?.path}');
+    if (file != null) {
       setState(() {
-        _selectedImage = image;
+        _selectedImage = file;
       });
+      debugPrint('>>> [IMAGE_PICKER] Image state updated');
+    } else {
+      debugPrint('>>> [IMAGE_PICKER] No file selected or dialog cancelled');
     }
   }
 
@@ -323,12 +301,29 @@ class _NewOfferFormState extends State<NewOfferForm> {
               child: _selectedImage != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.file(
-                        File(_selectedImage!.path),
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: double.infinity,
-                      ),
+                      child: kIsWeb
+                          ? Image.network(
+                              _selectedImage!.path,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                              errorBuilder: (context, error, stackTrace) {
+                                debugPrint('>>> [IMAGE_PICKER] Web image error: $error');
+                                return const Center(
+                                  child: Icon(
+                                    Icons.broken_image,
+                                    color: AppColors.textSecondary,
+                                    size: 32,
+                                  ),
+                                );
+                              },
+                            )
+                          : Image.file(
+                              File(_selectedImage!.path),
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                            ),
                     )
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -537,18 +532,33 @@ class ActiveOffersGrid extends StatelessWidget {
             );
           }
 
-          return SingleChildScrollView(
-            child: Column(
-              children: [
-                for (int i = 0; i < offers.length; i += 2)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
+          return Column(
+            children: [
+              for (int i = 0; i < offers.length; i += 2)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 24),
+                  child: Wrap(
+                    spacing: 24,
+                    runSpacing: 24,
+                    children: [
+                      SizedBox(
+                        width: 350,
+                        child: OfferCard(
+                          offer: offers[i],
+                          locale:
+                              context.watch<LocaleCubit>().state
+                                  is LocaleChanged
+                              ? (context.watch<LocaleCubit>().state
+                                        as LocaleChanged)
+                                    .locale
+                              : 'ar',
+                        ),
+                      ),
+                      if (i + 1 < offers.length)
+                        SizedBox(
+                          width: 350,
                           child: OfferCard(
-                            offer: offers[i],
+                            offer: offers[i + 1],
                             locale:
                                 context.watch<LocaleCubit>().state
                                     is LocaleChanged
@@ -558,27 +568,10 @@ class ActiveOffersGrid extends StatelessWidget {
                                 : 'ar',
                           ),
                         ),
-                        if (i + 1 < offers.length) ...[
-                          const SizedBox(width: 24),
-                          Expanded(
-                            child: OfferCard(
-                              offer: offers[i + 1],
-                              locale:
-                                  context.watch<LocaleCubit>().state
-                                      is LocaleChanged
-                                  ? (context.watch<LocaleCubit>().state
-                                            as LocaleChanged)
-                                        .locale
-                                  : 'ar',
-                            ),
-                          ),
-                        ] else
-                          const Expanded(child: SizedBox()),
-                      ],
-                    ),
+                    ],
                   ),
-              ],
-            ),
+                ),
+            ],
           );
         }
 
@@ -688,29 +681,14 @@ class OfferCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        offer.title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Switch(
-                      value: offer.isActive,
-                      onChanged: (v) => context
-                          .read<OfferCubit>()
-                          .toggleOfferStatus(offer.id, v),
-                      activeThumbColor: AppColors.textPrimary,
-                      activeTrackColor: AppColors.accentGreen.withOpacity(0.5),
-                    ),
-                  ],
+                Text(
+                  offer.title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -726,28 +704,25 @@ class OfferCard extends StatelessWidget {
                 const SizedBox(height: 20),
                 Row(
                   children: [
-                    const CircleAvatar(
-                      radius: 10,
-                      backgroundColor: AppColors.textSecondary,
-                    ),
-                    const SizedBox(width: 4),
-                    const Text(
-                      '+12',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: AppColors.textSecondary,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.border,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        offer.targetAudience == TargetAudience.all
+                            ? 'All'
+                            : offer.targetAudience == TargetAudience.newClients
+                                ? 'New'
+                                : 'VIP',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ),
                     const Spacer(),
-                    GestureDetector(
-                      onTap: () {},
-                      child: const Icon(
-                        Icons.edit_outlined,
-                        size: 16,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
                     GestureDetector(
                       onTap: () => _showDeleteDialog(context),
                       child: const Icon(
@@ -789,10 +764,135 @@ class OfferCard extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
+              debugPrint('>>> [DELETE] Deleting offer: ${offer.id}');
               context.read<OfferCubit>().deleteOffer(offer.id);
               Navigator.pop(ctx);
             },
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditDialog(BuildContext context) {
+    final titleController = TextEditingController(text: offer.title);
+    final descriptionController = TextEditingController(text: offer.description ?? '');
+    final valueController = TextEditingController(text: offer.value);
+    String valueType = offer.valueType == OfferValueType.percentage ? 'percentage' : 'fixed';
+    String targetAudience = offer.targetAudience == TargetAudience.all
+        ? 'all'
+        : offer.targetAudience == TargetAudience.newClients
+            ? 'new_clients'
+            : 'vip';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: Text(
+          'Edit Offer',
+          style: const TextStyle(color: AppColors.textPrimary),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                style: const TextStyle(color: AppColors.textPrimary),
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  labelStyle: TextStyle(color: AppColors.textSecondary),
+                  filled: true,
+                  fillColor: AppColors.bg,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: valueController,
+                style: const TextStyle(color: AppColors.textPrimary),
+                decoration: const InputDecoration(
+                  labelText: 'Value',
+                  labelStyle: TextStyle(color: AppColors.textSecondary),
+                  filled: true,
+                  fillColor: AppColors.bg,
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: valueType,
+                dropdownColor: AppColors.surface,
+                style: const TextStyle(color: AppColors.textPrimary),
+                decoration: const InputDecoration(
+                  labelText: 'Value Type',
+                  labelStyle: TextStyle(color: AppColors.textSecondary),
+                  filled: true,
+                  fillColor: AppColors.bg,
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'fixed', child: Text('Fixed \$')),
+                  DropdownMenuItem(value: 'percentage', child: Text('Percentage %')),
+                ],
+                onChanged: (v) => valueType = v!,
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: targetAudience,
+                dropdownColor: AppColors.surface,
+                style: const TextStyle(color: AppColors.textPrimary),
+                decoration: const InputDecoration(
+                  labelText: 'Target',
+                  labelStyle: TextStyle(color: AppColors.textSecondary),
+                  filled: true,
+                  fillColor: AppColors.bg,
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'all', child: Text('All Clients')),
+                  DropdownMenuItem(value: 'new_clients', child: Text('New Clients')),
+                  DropdownMenuItem(value: 'vip', child: Text('VIP')),
+                ],
+                onChanged: (v) => targetAudience = v!,
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: descriptionController,
+                style: const TextStyle(color: AppColors.textPrimary),
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Description',
+                  labelStyle: TextStyle(color: AppColors.textSecondary),
+                  filled: true,
+                  fillColor: AppColors.bg,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final data = {
+                'title': titleController.text,
+                'description': descriptionController.text,
+                'value': valueController.text,
+                'value_type': valueType,
+                'targetaudience': targetAudience,
+              };
+              context.read<OfferCubit>().updateOffer(offer.id, data);
+              Navigator.pop(ctx);
+            },
+            child: const Text(
+              'Save',
+              style: TextStyle(color: AppColors.textPrimary),
+            ),
           ),
         ],
       ),

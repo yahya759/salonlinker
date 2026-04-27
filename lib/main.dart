@@ -69,7 +69,7 @@ class DashboardScreen extends StatelessWidget {
             Expanded(
               child: Column(
                 children: [
-                  const TopBar(),
+                  TopBar(onRefresh: () => context.read<AppCubit>().loadAll()),
                   const Expanded(child: DashboardView()),
                 ],
               ),

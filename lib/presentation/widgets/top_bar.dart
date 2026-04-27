@@ -5,7 +5,8 @@ import '../../core/constants/app_strings.dart';
 import '../cubit/locale_cubit.dart';
 
 class TopBar extends StatelessWidget {
-  const TopBar({super.key});
+  final VoidCallback? onRefresh;
+  const TopBar({super.key, this.onRefresh});
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +53,7 @@ class TopBar extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          const TopBarIcon(icon: Icons.refresh_rounded),
+          TopBarIcon(icon: Icons.refresh_rounded, onTap: onRefresh),
           const SizedBox(width: 8),
           const TopBarIcon(icon: Icons.notifications_none_rounded),
           const SizedBox(width: 8),
@@ -78,19 +79,23 @@ class TopBar extends StatelessWidget {
 
 class TopBarIcon extends StatelessWidget {
   final IconData icon;
-  const TopBarIcon({super.key, required this.icon});
+  final VoidCallback? onTap;
+  const TopBarIcon({super.key, required this.icon, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 34,
-      height: 34,
-      decoration: BoxDecoration(
-        color: AppColors.surface2,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: AppColors.surface2,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Icon(icon, color: AppColors.textSecondary, size: 17),
       ),
-      child: Icon(icon, color: AppColors.textSecondary, size: 17),
     );
   }
 }

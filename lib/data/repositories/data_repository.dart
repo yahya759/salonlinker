@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 import '../models/barber_model.dart';
 import '../models/user_model.dart';
@@ -31,7 +32,18 @@ class DataRepository {
   }
 
   Future<void> deleteBarber(int id) async {
-    await _client.from('barbers').delete().eq('id', id);
+    debugPrint('>>> [REPO] deleteBarber called with id: $id');
+    try {
+      final result = await _client.from('barbers').delete().eq('id', id).select();
+      debugPrint('>>> [REPO] deleteBarber result: $result');
+      if (result.isEmpty) {
+        debugPrint('>>> [REPO] WARNING: Delete returned empty result - possibly RLS blocked or row not found');
+      }
+      debugPrint('>>> [REPO] deleteBarber completed');
+    } catch (e) {
+      debugPrint('>>> [REPO] deleteBarber ERROR: $e');
+      rethrow;
+    }
   }
 
   Future<void> toggleBarberAvailability(int id, bool isActive) async {
@@ -67,8 +79,12 @@ class DataRepository {
   }
 
   // ============ RESERVATIONS ============
-  Future<List<Reservation>> getReservations() async {
-    final response = await _client.from('reservations').select();
+Future<List<Reservation>> getReservations() async {
+    final response = await _client.from('reservations').select('*');
+    debugPrint('getReservations: ${response.length} items');
+    if (response.isNotEmpty) {
+      debugPrint('Sample: ${response.first}');
+    }
     return (response as List).map((e) => Reservation.fromMap(e)).toList();
   }
 
@@ -76,8 +92,12 @@ class DataRepository {
     final dateStr = date.toIso8601String().split('T')[0];
     final response = await _client
         .from('reservations')
-        .select()
+        .select('*')
         .eq('booking_date', dateStr);
+    debugPrint('getReservationsByDate ($dateStr): ${response.length} items');
+    if (response.isNotEmpty) {
+      debugPrint('Sample: ${response.first}');
+    }
     return (response as List).map((e) => Reservation.fromMap(e)).toList();
   }
 
@@ -199,3 +219,4 @@ class DataRepository {
         .eq('id', id);
   }
 }
+

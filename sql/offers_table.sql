@@ -27,11 +27,11 @@ ALTER TABLE offers ENABLE ROW LEVEL SECURITY;
 -- سياسة القراءة للجميع
 CREATE POLICY "offers_read_policy" ON offers FOR SELECT USING (true);
 
--- سياسة الإدراج للمصادقين فقط
-CREATE POLICY "offers_insert_policy" ON offers FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+--上市公司 التحديث للجميع
+CREATE POLICY "offers_update_policy" ON offers FOR UPDATE USING (true);
 
--- سياسة التحديث للمصادقين فقط
-CREATE POLICY "offers_update_policy" ON offers FOR UPDATE USING (auth.role() = 'authenticated');
+--上市公司 الإدراج للجميع
+CREATE POLICY "offers_insert_policy" ON offers FOR INSERT WITH CHECK (true);
 
--- سياسة الحذف للمصادقين فقط
-CREATE POLICY "offers_delete_policy" ON offers FOR DELETE USING (auth.role() = 'authenticated');
+--上市公司 الحذف للجميع
+CREATE POLICY "offers_delete_policy" ON offers FOR DELETE USING (true);
