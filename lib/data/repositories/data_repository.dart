@@ -24,7 +24,8 @@ class DataRepository {
   }
 
   Future<void> createBarber(Barber barber) async {
-    await _client.from('barbers').insert(barber.toMap());
+    final data = barber.toMap()..remove('id');
+    await _client.from('barbers').insert(data);
   }
 
   Future<void> updateBarber(int id, Map<String, dynamic> data) async {
